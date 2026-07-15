@@ -1,0 +1,54 @@
+{
+  "id": "./",
+  "name": "10th Edition Rule Finder",
+  "short_name": "Rule Finder",
+  "description": "Offline table-side reference for Warhammer 40,000 10th Edition.",
+  "start_url": "./#home",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0c1015",
+  "theme_color": "#101419",
+  "categories": ["games", "reference", "utilities"],
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "./icons/app-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/app-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/app-icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Active Game",
+      "short_name": "Active Game",
+      "description": "Open the table-side game reference list.",
+      "url": "./#active-game"
+    },
+    {
+      "name": "Search Rules",
+      "short_name": "Rules",
+      "description": "Browse and search the rules reference.",
+      "url": "./#rules"
+    },
+    {
+      "name": "Units",
+      "short_name": "Units",
+      "description": "Open the unit directory.",
+      "url": "./#units"
+    }
+  ]
+}
