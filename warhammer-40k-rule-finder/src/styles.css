@@ -19,6 +19,7 @@
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
 body { margin: 0; min-width: 320px; overscroll-behavior-y: none; background: var(--canvas); color: var(--text); }
+body.dialog-open { overflow: hidden; }
 button, input, select { font: inherit; }
 button { cursor: pointer; }
 button:disabled { cursor: not-allowed; opacity: .55; }
@@ -44,6 +45,7 @@ input[type="search"] { width: 100%; border: 1px solid #52707a; border-radius: 12
 input[type="search"]:focus { border-color: var(--accent); box-shadow: 0 0 0 3px #e5b44c2c; }
 button { border: 1px solid var(--line); border-radius: 9px; background: var(--surface-2); color: var(--text); padding: 10px 13px; }
 button:hover, button:focus-visible { border-color: var(--accent); color: #ffe4a8; outline: none; }
+[data-view] :is(h1, h2)[tabindex="-1"]:focus:not(:focus-visible) { outline: none; }
 .ghost { flex: 0 0 auto; }
 .filters, .quick-links, .tag-row, .related-row, .scenario-rule-links { display: flex; gap: 8px; flex-wrap: wrap; }
 .filters { margin-top: 13px; }
@@ -136,7 +138,7 @@ button:hover, button:focus-visible { border-color: var(--accent); color: #ffe4a8
 output { display: block; min-height: 45px; color: #d8e7de; font-weight: 650; line-height: 1.45; }
 output.error { color: var(--danger); }
 .empty-state { grid-column: 1 / -1; }
-dialog { width: min(720px, calc(100% - 28px)); max-height: calc(100vh - 28px); overflow: auto; border: 1px solid #52616a; border-radius: 16px; background: #10171d; color: var(--text); padding: 28px; }
+dialog { box-sizing: border-box; width: min(720px, calc(100% - 28px)); max-height: calc(100vh - 28px); max-height: calc(100dvh - 28px); overflow: auto; border: 1px solid #52616a; border-radius: 16px; background: #10171d; color: var(--text); padding: 28px; }
 dialog::backdrop { background: #05070bd9; backdrop-filter: blur(3px); }
 .dialog-close { position: sticky; float: right; top: 0; right: 0; width: 36px; height: 36px; padding: 0; border-radius: 999px; font-size: 1.6rem; line-height: 1; }
 .dialog-summary { color: #e2ebe6; font-size: 1.1rem; }
@@ -194,10 +196,11 @@ dialog li { margin: 7px 0; line-height: 1.45; }
 .active-game-controls label { display: grid; gap: 6px; color: #dfe8e3; font-size: .78rem; font-weight: 700; }
 .active-game-controls select { min-width: 0; border: 1px solid #52626a; border-radius: 8px; background: #0d141a; color: var(--text); padding: 9px; }
 .active-game-controls button { align-self: end; }
-.game-reference { margin-top: 24px; border-top: 1px solid var(--line); padding-top: 22px; }
+.game-reference { margin-top: 16px; border: 1px solid var(--line); border-radius: 12px; background: #10181e; padding: 14px; }
 .game-reference .section-heading h2, .active-game-group .section-heading h2 { font-size: 1.1rem; }
-.game-reference .section-heading { align-items: end; }
+.game-reference .section-heading { align-items: end; margin-bottom: 0; }
 .game-reference .section-heading p { margin-bottom: 0; }
+.game-reference[data-empty="true"] .game-reference-groups, .game-reference[data-empty="true"] #clear-game-reference { display: none; }
 .game-reference-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; }
 .game-reference-actions button { padding: 8px 10px; font-size: .76rem; }
 .game-reference-groups { display: grid; gap: 12px; margin-top: 16px; }
@@ -343,14 +346,26 @@ dialog li { margin: 7px 0; line-height: 1.45; }
   .rules-list { grid-template-columns: 1fr; }
   .active-game-section { padding: 16px; }
   .game-timing-toolbar { position: sticky; top: 138px; z-index: 10; margin: 16px -8px 0; border: 1px solid #43545e; border-radius: 12px; background: #10171df2; padding: 8px; backdrop-filter: blur(12px); }
-  .game-state-switcher { display: flex; overflow-x: auto; padding-bottom: 2px; }
-  .game-state-switcher button { flex: 0 0 auto; min-width: 76px; }
-  .turn-switcher button { flex: 1 0 118px; }
+  .game-state-switcher { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; overflow: visible; padding-bottom: 0; }
+  .game-state-switcher button { min-width: 0; padding: 6px 2px; font-size: clamp(.62rem, 2.4vw, .72rem); }
+  .turn-switcher { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  .turn-switcher button { padding-inline: 8px; font-size: .72rem; }
   .game-setup > summary strong { max-width: 60%; }
   .active-game-controls, .active-stratagem-grid { grid-template-columns: 1fr; }
-  .game-reference .section-heading { align-items: stretch; }
-  .game-reference-actions { justify-content: flex-start; }
+  .game-reference .section-heading { align-items: stretch; gap: 10px; }
+  .game-reference .section-heading > div > p:last-child { display: none; }
+  .game-reference-actions { display: grid; grid-template-columns: auto repeat(2, minmax(0, 1fr)); justify-content: stretch; width: 100%; gap: 6px; }
+  .game-reference-actions .ghost { width: auto; }
+  .game-reference[data-empty="true"] .game-reference-actions { grid-template-columns: auto minmax(0, 1fr); }
+  .game-reference-groups { margin-top: 10px; }
   .game-reference-item { grid-template-columns: 1fr; }
   .reference-controls { justify-content: flex-start; }
   .dialog-toolbar { justify-content: flex-start; margin: 0 0 14px; }
+  dialog { width: calc(100% - 16px); max-height: calc(100vh - 16px); max-height: calc(100dvh - 16px); padding: 20px; }
+  .undo-notice { right: 12px; bottom: max(12px, env(safe-area-inset-bottom)); left: 12px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; max-width: none; }
+  .undo-notice span { grid-column: 1 / -1; line-height: 1.4; }
+  .undo-notice button { width: 100%; min-height: 44px; }
+  #undo-notice button { grid-column: 1 / -1; }
+  #app-status { bottom: max(12px, env(safe-area-inset-bottom)); }
+  #update-notice:not([hidden]) ~ #app-status:not([hidden]) { top: 12px; bottom: auto; }
 }

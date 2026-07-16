@@ -32,6 +32,8 @@ import { buildUnitDetailView } from "./views/unit-detail.js";
 import { buildDatasheetDetailView, buildDetachmentDetailView, buildFactionRuleDetailView, buildRuleDetailView } from "./views/reference-details.js";
 import { buildSourceVerificationKey } from "./views/source-verification.js";
 import { createAppUpdateController } from "./controllers/app-updates.js";
+import { createActiveGameController } from "./controllers/active-game.js";
+import { createReferenceDialogController } from "./controllers/reference-dialog.js";
 import { createSearchController } from "./controllers/search-state.js";
 import { createUnitDirectoryController } from "./controllers/unit-directory.js";
 
@@ -45,6 +47,16 @@ const resultCount = document.querySelector("#result-count");
 const resultsTitle = document.querySelector("#results-title");
 const dialog = document.querySelector("#rule-dialog");
 const dialogContent = document.querySelector("#dialog-content");
+const referenceDialogController = createReferenceDialogController({
+  dialog,
+  closeButton: document.querySelector("#close-dialog"),
+  body: document.body,
+  onRequestClose: closeDetail,
+  onClosed: () => {
+    const route = parseAppRoute(location.hash);
+    if (route.detailType) location.hash = `#${route.view}`;
+  }
+});
 const searchController = createSearchController({
   headerInput: searchInput,
   homeInput: homeSearchInput,
@@ -65,6 +77,16 @@ const unitDirectoryController = createUnitDirectoryController({
 });
 const quickQueries = ["Turn order", "Command Re-roll", "Fire Overwatch", "Fields of Fire", "Vehicle engaged", "Hazardous"];
 const activeGame = loadActiveGame(localStorage, defaultActiveGame);
+const activeGameController = createActiveGameController({
+  state: activeGame,
+  defaultState: defaultActiveGame,
+  form: document.querySelector("#active-game-controls"),
+  phaseSwitcher: document.querySelector("#phase-switcher"),
+  turnSwitcher: document.querySelector("#turn-switcher"),
+  summary: document.querySelector("#game-setup-summary"),
+  resetButton: document.querySelector("#reset-active-game"),
+  onChange: () => { saveActiveGame(); void renderActiveGame(); }
+});
 let gameReferences = loadGameReferences(localStorage);
 let recentReferences = migrateRecentRoutes(loadRecent(localStorage));
 let detachmentEntries = [];
@@ -77,7 +99,6 @@ let detachmentLoadPromise;
 let unitLoadPromise;
 let detachmentLoadAttempt = 0;
 let unitLoadAttempt = 0;
-let activeGameInitialised = false;
 let undoTimer;
 let persistenceIsDurable = true;
 let focusRouteOnChange = false;
@@ -165,10 +186,6 @@ function renderRecent() {
   container.innerHTML = recentReferences.length ? recentReferences.map((entry) => `<button type="button" data-deep-link="${escapeHtml(entry.hash)}"><strong>${escapeHtml(entry.title)}</strong><span>${escapeHtml(entry.subtitle)}</span></button>`).join("") : `<p class="empty-copy">Opened rules, units, and detachments will appear here.</p>`;
 }
 
-function showDialog() {
-  if (!dialog.open) dialog.showModal();
-}
-
 function offerUndo(message, restore) {
   const notice = document.querySelector("#undo-notice");
   notice.querySelector("span").textContent = message;
@@ -252,6 +269,7 @@ async function renderGameReference() {
   if (gameReferences.some((item) => item.type === "unit")) await ensureUnits();
   if (gameReferences.some((item) => ["detachment", "enhancement", "stratagem"].includes(item.type))) await ensureDetachments();
   const view = buildGameReferenceView(gameReferences, { unitDirectory, datasheetExplainers, ruleEntries, factionRuleGuides, detachmentEntries, getRule: getEntryById, weaponProfileMap });
+  document.querySelector(".game-reference").dataset.empty = String(view.count === 0);
   document.querySelector("#game-reference-count").textContent = `${view.count} saved`;
   document.querySelector("#clear-game-reference").disabled = view.count === 0;
   document.querySelector("#game-reference-results").innerHTML = view.html;
@@ -259,68 +277,15 @@ async function renderGameReference() {
 
 async function renderActiveGame() {
   await ensureDetachments();
-  initialiseActiveGame();
+  activeGameController.initialise(detachmentEntries);
   if (state.route !== "active-game") return;
-  syncActiveGameControls();
+  activeGameController.sync();
   const reference = buildActiveGameReference({ detachments: detachmentEntries, coreStratagems: coreStratagemTimings, ...activeGame });
   document.querySelector("#active-now-count").textContent = `${reference.now.length} matches`;
   document.querySelector("#active-later-count").textContent = `${reference.later.length} later`;
   document.querySelector("#active-now").innerHTML = reference.now.length ? reference.now.map(renderActiveStratagem).join("") : `<div class="empty-state"><h3>No timing matches</h3><p>There are no Core or selected-detachment Stratagems matching this phase and active player.</p></div>`;
   document.querySelector("#active-later").innerHTML = reference.later.map(renderActiveStratagem).join("");
   await renderGameReference();
-}
-
-function syncActiveGameControls() {
-  const form = document.querySelector("#active-game-controls");
-  if (!form || !activeGameInitialised) return;
-  form.elements.astraDetachmentId.value = activeGame.astraDetachmentId;
-  form.elements.chaosDetachmentId.value = activeGame.chaosDetachmentId;
-  document.querySelectorAll("[data-game-phase]").forEach((button) => {
-    const active = button.dataset.gamePhase === activeGame.phase;
-    button.classList.toggle("active", active);
-    button.setAttribute("aria-pressed", String(active));
-  });
-  document.querySelectorAll("[data-active-faction]").forEach((button) => {
-    const active = button.dataset.activeFaction === activeGame.activeFaction;
-    button.classList.toggle("active", active);
-    button.setAttribute("aria-pressed", String(active));
-  });
-  const astraName = form.elements.astraDetachmentId.selectedOptions[0]?.textContent ?? "Astra";
-  const chaosName = form.elements.chaosDetachmentId.selectedOptions[0]?.textContent ?? "Chaos";
-  document.querySelector("#game-setup-summary").textContent = `${astraName} · ${chaosName}`;
-}
-
-function initialiseActiveGame() {
-  if (activeGameInitialised) return;
-  activeGameInitialised = true;
-  const form = document.querySelector("#active-game-controls");
-  const astra = detachmentEntries.filter((entry) => entry.faction === "Astra Militarum");
-  const chaos = detachmentEntries.filter((entry) => entry.faction === "Chaos Space Marines");
-  form.elements.astraDetachmentId.innerHTML = astra.map((entry) => `<option value="${entry.id}">${escapeHtml(entry.name)}</option>`).join("");
-  form.elements.chaosDetachmentId.innerHTML = chaos.map((entry) => `<option value="${entry.id}">${escapeHtml(entry.name)}</option>`).join("");
-  syncActiveGameControls();
-  form.addEventListener("change", () => {
-    activeGame.astraDetachmentId = form.elements.astraDetachmentId.value;
-    activeGame.chaosDetachmentId = form.elements.chaosDetachmentId.value;
-    saveActiveGame(); void renderActiveGame();
-  });
-  document.querySelector("#phase-switcher").addEventListener("click", (event) => {
-    const button = event.target.closest("[data-game-phase]");
-    if (!button) return;
-    activeGame.phase = button.dataset.gamePhase;
-    saveActiveGame(); void renderActiveGame();
-  });
-  document.querySelector("#turn-switcher").addEventListener("click", (event) => {
-    const button = event.target.closest("[data-active-faction]");
-    if (!button) return;
-    activeGame.activeFaction = button.dataset.activeFaction;
-    saveActiveGame(); void renderActiveGame();
-  });
-  document.querySelector("#reset-active-game").addEventListener("click", () => {
-    Object.assign(activeGame, defaultActiveGame);
-    syncActiveGameControls();
-    saveActiveGame(); void renderActiveGame();
-  });
 }
 
 function focusDetachmentDetail(type, id) {
@@ -343,7 +308,7 @@ async function openDetachment(id, focusType = null, focusId = null) {
     referenceButton: gameReferenceButton("detachment", entry.id),
     referenceButtonFor: gameReferenceButton
   });
-  showDialog();
+  referenceDialogController.show();
   focusDetachmentDetail(focusType, focusedItem?.id ?? focusId);
 }
 
@@ -352,7 +317,7 @@ function openFactionRule(id) {
   if (!guide) return;
   recordRecent({ title: guide.title, subtitle: `${guide.faction} · Army rule`, hash: buildDetailHash("rules", "faction-rule", guide.id) });
   dialogContent.innerHTML = buildFactionRuleDetailView({ guide, referenceButton: gameReferenceButton("faction-rule", guide.id) });
-  showDialog();
+  referenceDialogController.show();
 }
 
 function openDatasheet(id) {
@@ -361,7 +326,7 @@ function openDatasheet(id) {
   recordRecent({ title: entry.name, subtitle: `${entry.faction} · Interaction guide`, hash: buildDetailHash("units", "datasheet", entry.id) });
   const related = entry.ruleIds.map((ruleId) => getEntryById(ruleEntries, ruleId)).filter(Boolean);
   dialogContent.innerHTML = buildDatasheetDetailView({ entry, related, referenceButton: gameReferenceButton("datasheet", entry.id) });
-  showDialog();
+  referenceDialogController.show();
 }
 
 async function openUnit(id) {
@@ -371,7 +336,7 @@ async function openUnit(id) {
   recordRecent({ title: unit.name, subtitle: `${unit.faction} · ${unit.role}`, hash: buildDetailHash("units", "unit", unit.referenceId) });
   const weapons = unit.weaponProfileIds.map((weaponId) => weaponProfileMap.get(weaponId)).filter(Boolean);
   dialogContent.innerHTML = buildUnitDetailView({ unit, weapons, unitNameMap, metadata: unitDirectoryMetadata, referenceButton: gameReferenceButton("unit", unit.referenceId) });
-  showDialog();
+  referenceDialogController.show();
 }
 
 function openRule(id) {
@@ -380,7 +345,7 @@ function openRule(id) {
   recordRecent({ title: entry.title, subtitle: entry.category, hash: buildDetailHash("rules", "rule", entry.id) });
   const related = getRelatedEntries(ruleEntries, entry);
   dialogContent.innerHTML = buildRuleDetailView({ entry, related, referenceButton: gameReferenceButton("rule", entry.id) });
-  showDialog();
+  referenceDialogController.show();
 }
 
 async function renderRouteContent(view) {
@@ -445,7 +410,7 @@ async function applyRoute() {
   if (!rendered) return;
   if (location.hash !== requestedHash) return;
   if (route.detailType && route.detailId) await openRouteDetail(route.detailType, route.detailId, route.detailSubId);
-  else if (dialog.open) dialog.close();
+  else if (dialog.open) referenceDialogController.close();
   const viewTitle = { home: "10th Edition Rule Finder", "active-game": "Active Game | 10th Edition Rule Finder", rules: "Rules | 10th Edition Rule Finder", detachments: "Detachments | 10th Edition Rule Finder", units: "Units | 10th Edition Rule Finder" }[route.view];
   document.title = viewTitle;
   if (viewChanged) document.querySelector("#route-status").textContent = `${route.view === "active-game" ? "Active Game" : route.view[0].toUpperCase() + route.view.slice(1)} view loaded.`;
@@ -466,7 +431,7 @@ function navigateDetail(view, type, id) {
 function closeDetail() {
   const route = parseAppRoute(location.hash);
   if (route.detailType) location.hash = `#${route.view}`;
-  else dialog.close();
+  else referenceDialogController.close();
 }
 
 function bindCalculator(formId, handler) {
@@ -599,19 +564,14 @@ document.querySelector("#clear-game-reference").addEventListener("click", () => 
 document.querySelector("#start-new-game").addEventListener("click", () => {
   const previousGame = { ...activeGame };
   const previousReferences = gameReferences;
-  Object.assign(activeGame, defaultActiveGame);
-  syncActiveGameControls();
+  activeGameController.replace(defaultActiveGame);
   gameReferences = [];
   saveActiveGame(); saveGameReferences(); void renderActiveGame();
   offerUndo("New game started.", () => {
-    Object.assign(activeGame, previousGame); gameReferences = previousReferences;
-    syncActiveGameControls();
+    activeGameController.replace(previousGame); gameReferences = previousReferences;
     saveActiveGame(); saveGameReferences(); void renderActiveGame();
   });
 });
-document.querySelector("#close-dialog").addEventListener("click", closeDetail);
-dialog.addEventListener("click", (event) => { if (event.target === dialog) closeDetail(); });
-dialog.addEventListener("close", () => { const route = parseAppRoute(location.hash); if (route.detailType) location.hash = `#${route.view}`; });
 window.addEventListener("hashchange", () => { void applyRoute(); });
 document.querySelector("#dismiss-app-status").addEventListener("click", () => { document.querySelector("#app-status").hidden = true; });
 

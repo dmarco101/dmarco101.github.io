@@ -97,16 +97,16 @@
             <button id="reset-active-game" class="ghost" type="button">Reset game setup</button>
           </form>
         </details>
-        <div class="timing-warning"><strong>Timing match only.</strong> Check the target, trigger, CP, and restrictions before using a Stratagem.</div>
-        <div class="active-game-group"><div class="section-heading inline-heading"><h2>Relevant now</h2><span id="active-now-count" class="result-count"></span></div><div id="active-now" class="active-stratagem-grid"></div></div>
-        <details class="later-group"><summary>Show Stratagems for other phases <span id="active-later-count"></span></summary><div id="active-later" class="active-stratagem-grid"></div></details>
-        <section class="game-reference" aria-labelledby="game-reference-title">
+        <section class="game-reference" data-empty="true" aria-labelledby="game-reference-title">
           <div class="section-heading inline-heading">
-            <div><p class="eyebrow">This match</p><h2 id="game-reference-title">Game Reference List</h2><p>Save the units and rules you expect to check during play.</p></div>
+            <div><p class="eyebrow">Pinned for this game</p><h2 id="game-reference-title">Game Reference List</h2><p>Keep the units and rules you expect to check within immediate reach.</p></div>
             <div class="game-reference-actions"><span id="game-reference-count" class="result-count"></span><button id="clear-game-reference" class="ghost" type="button">Clear references</button><button id="start-new-game" type="button">Start new game</button></div>
           </div>
           <div id="game-reference-results" class="game-reference-groups"></div>
         </section>
+        <div class="timing-warning"><strong>Timing match only.</strong> Check the target, trigger, CP, and restrictions before using a Stratagem.</div>
+        <div class="active-game-group"><div class="section-heading inline-heading"><h2>Relevant now</h2><span id="active-now-count" class="result-count"></span></div><div id="active-now" class="active-stratagem-grid"></div></div>
+        <details class="later-group"><summary>Show Stratagems for other phases <span id="active-later-count"></span></summary><div id="active-later" class="active-stratagem-grid"></div></details>
       </section>
 
       <section class="turn-flow-section" data-view="rules" aria-labelledby="turn-flow-title">

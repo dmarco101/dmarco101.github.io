@@ -168,13 +168,22 @@ export function validateDatasheetExplainers(explainers, ruleEntries) {
   return errors;
 }
 
+function unitSearchScore(unit, query) {
+  const name = normalise(unit.name);
+  if (name === query) return 0;
+  const characterPenalty = unit.role === "Characters" ? 1 : 0;
+  if (name.startsWith(`${query} `)) return 1 + characterPenalty;
+  return 3 + characterPenalty;
+}
+
 export function searchUnitDirectory(units, weaponProfiles, { query = "", faction = "all", role = "all" } = {}) {
   let weaponMap = weaponMapCache.get(weaponProfiles);
   if (!weaponMap) { weaponMap = new Map(weaponProfiles.map((weapon) => [weapon.id, weapon])); weaponMapCache.set(weaponProfiles, weaponMap); }
-  return units.filter((unit) => {
+  const normalizedQuery = normalise(query);
+  const matches = units.filter((unit) => {
     if (faction !== "all" && unit.faction !== faction) return false;
     if (role !== "all" && unit.role !== role) return false;
-    if (!normalise(query)) return true;
+    if (!normalizedQuery) return true;
     let cached = unitSearchCache.get(unit);
     if (!cached || cached.weaponProfiles !== weaponProfiles) {
       const weapons = unit.weaponProfileIds.map((id) => weaponMap.get(id)).filter(Boolean);
@@ -190,6 +199,10 @@ export function searchUnitDirectory(units, weaponProfiles, { query = "", faction
     const { haystack } = cached;
     return matchesSearchQuery(query, haystack);
   });
+  if (!normalizedQuery) return matches;
+  return matches.map((unit, index) => ({ unit, index, score: unitSearchScore(unit, normalizedQuery) }))
+    .sort((left, right) => left.score - right.score || left.index - right.index)
+    .map(({ unit }) => unit);
 }
 
 export function validateUnitDirectory(units, weaponProfiles, metadata) {
