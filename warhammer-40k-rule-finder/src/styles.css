@@ -182,7 +182,10 @@ dialog li { margin: 7px 0; line-height: 1.45; }
 .rule-detail-body a { font-size: .78rem; }
 .rule-detail.deep-link-target { border-color: var(--accent); box-shadow: 0 0 0 2px #e5b44c22; }
 .active-game-section { border: 1px solid #43545e; border-radius: 18px; background: linear-gradient(145deg, #18252c, #10171d); padding: 22px; }
-.game-timing-toolbar { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(260px, .8fr); gap: 14px; margin-top: 20px; }
+.game-timing-sentinel { height: 1px; margin-bottom: -1px; }
+.game-timing-toolbar { margin-top: 20px; }
+.game-timing-controls { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(260px, .8fr); gap: 14px; }
+.game-timing-toggle { display: none; }
 .game-timing-toolbar fieldset { min-width: 0; margin: 0; border: 0; padding: 0; }
 .game-timing-toolbar legend { margin-bottom: 7px; color: #dfe8e3; font-size: .74rem; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }
 .game-state-switcher { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
@@ -316,7 +319,7 @@ dialog li { margin: 7px 0; line-height: 1.45; }
   .home-dashboard { grid-template-columns: 1fr; }
   .rule-grid, .scenario-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .calculator-grid { grid-template-columns: 1fr; }
-  .game-timing-toolbar { grid-template-columns: 1fr; }
+  .game-timing-controls { grid-template-columns: 1fr; }
   .active-game-controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .active-game-controls button { grid-column: 1 / -1; }
   .turn-flow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -345,7 +348,17 @@ dialog li { margin: 7px 0; line-height: 1.45; }
   .rule-card { min-height: 0; }
   .rules-list { grid-template-columns: 1fr; }
   .active-game-section { padding: 16px; }
+  .active-game-section { --active-game-sticky-top: 198px; }
   .game-timing-toolbar { position: sticky; top: 138px; z-index: 10; margin: 16px -8px 0; border: 1px solid #43545e; border-radius: 12px; background: #10171df2; padding: 8px; backdrop-filter: blur(12px); }
+  .game-timing-toolbar.is-stuck { box-shadow: 0 10px 24px #0008; }
+  .game-timing-toolbar.is-stuck .game-timing-toggle { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; min-height: 44px; border-color: #52626a; background: #111a20; padding: 7px 10px; text-align: left; }
+  .game-timing-toggle > span:first-child { display: grid; gap: 2px; min-width: 0; }
+  .game-timing-toggle small { color: var(--muted); font-size: .62rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+  .game-timing-toggle strong { overflow: hidden; color: var(--text); font-size: .78rem; text-overflow: ellipsis; white-space: nowrap; }
+  .game-timing-action { flex: 0 0 auto; color: var(--accent); font-size: .72rem; font-weight: 800; }
+  .game-timing-toolbar.is-stuck:not(.is-compact) .game-timing-controls { margin-top: 8px; }
+  .game-timing-toolbar.is-compact { padding: 6px; }
+  .game-timing-controls[hidden] { display: none; }
   .game-state-switcher { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; overflow: visible; padding-bottom: 0; }
   .game-state-switcher button { min-width: 0; padding: 6px 2px; font-size: clamp(.62rem, 2.4vw, .72rem); }
   .turn-switcher { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
@@ -359,6 +372,8 @@ dialog li { margin: 7px 0; line-height: 1.45; }
   .game-reference[data-empty="true"] .game-reference-actions { grid-template-columns: auto minmax(0, 1fr); }
   .game-reference-groups { margin-top: 10px; }
   .game-reference-item { grid-template-columns: 1fr; }
+  .active-stratagem { scroll-margin-top: var(--active-game-sticky-top); }
+  .active-stratagem[open] > summary { position: sticky; top: var(--active-game-sticky-top); z-index: 8; border-bottom: 1px solid var(--line); background: #111a20; box-shadow: 0 7px 16px #0007; }
   .reference-controls { justify-content: flex-start; }
   .dialog-toolbar { justify-content: flex-start; margin: 0 0 14px; }
   dialog { width: calc(100% - 16px); max-height: calc(100vh - 16px); max-height: calc(100dvh - 16px); padding: 20px; }

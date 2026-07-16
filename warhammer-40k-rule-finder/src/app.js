@@ -80,11 +80,22 @@ const activeGame = loadActiveGame(localStorage, defaultActiveGame);
 const activeGameController = createActiveGameController({
   state: activeGame,
   defaultState: defaultActiveGame,
+  section: document.querySelector(".active-game-section"),
+  appHeader: document.querySelector(".app-header"),
   form: document.querySelector("#active-game-controls"),
+  toolbar: document.querySelector("#game-timing-toolbar"),
+  timingSentinel: document.querySelector("#game-timing-sentinel"),
+  timingControls: document.querySelector("#game-timing-controls"),
+  timingToggle: document.querySelector("#game-timing-toggle"),
+  timingCurrent: document.querySelector("#game-timing-current"),
+  timingAction: document.querySelector("#game-timing-action"),
   phaseSwitcher: document.querySelector("#phase-switcher"),
   turnSwitcher: document.querySelector("#turn-switcher"),
   summary: document.querySelector("#game-setup-summary"),
   resetButton: document.querySelector("#reset-active-game"),
+  scrollTarget: window,
+  mobileQuery: window.matchMedia("(max-width: 560px)"),
+  requestFrame: window.requestAnimationFrame.bind(window),
   onChange: () => { saveActiveGame(); void renderActiveGame(); }
 });
 let gameReferences = loadGameReferences(localStorage);

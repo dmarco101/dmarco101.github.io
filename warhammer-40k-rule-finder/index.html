@@ -81,13 +81,20 @@
           <h1 id="active-game-title">What can matter right now?</h1>
           <p>Change the phase and active player as the game moves. Results are timing matches, not a guarantee that every target or trigger condition is legal.</p>
         </div>
-        <div class="game-timing-toolbar">
-          <fieldset><legend>Phase</legend><div id="phase-switcher" class="game-state-switcher">
-            <button type="button" data-game-phase="Command" aria-pressed="false">Command</button><button type="button" data-game-phase="Movement" aria-pressed="false">Movement</button><button type="button" data-game-phase="Shooting" aria-pressed="false">Shooting</button><button type="button" data-game-phase="Charge" aria-pressed="false">Charge</button><button type="button" data-game-phase="Fight" aria-pressed="false">Fight</button>
-          </div></fieldset>
-          <fieldset><legend>Active player</legend><div id="turn-switcher" class="game-state-switcher turn-switcher">
-            <button type="button" data-active-faction="Astra Militarum" aria-pressed="false">Astra turn</button><button type="button" data-active-faction="Chaos Space Marines" aria-pressed="false">Chaos turn</button>
-          </div></fieldset>
+        <div id="game-timing-sentinel" class="game-timing-sentinel" aria-hidden="true"></div>
+        <div id="game-timing-toolbar" class="game-timing-toolbar">
+          <button id="game-timing-toggle" class="game-timing-toggle" type="button" aria-expanded="true" aria-controls="game-timing-controls">
+            <span><small>Current timing</small><strong id="game-timing-current"></strong></span>
+            <span id="game-timing-action" class="game-timing-action">Done</span>
+          </button>
+          <div id="game-timing-controls" class="game-timing-controls">
+            <fieldset><legend>Phase</legend><div id="phase-switcher" class="game-state-switcher">
+              <button type="button" data-game-phase="Command" aria-pressed="false">Command</button><button type="button" data-game-phase="Movement" aria-pressed="false">Movement</button><button type="button" data-game-phase="Shooting" aria-pressed="false">Shooting</button><button type="button" data-game-phase="Charge" aria-pressed="false">Charge</button><button type="button" data-game-phase="Fight" aria-pressed="false">Fight</button>
+            </div></fieldset>
+            <fieldset><legend>Active player</legend><div id="turn-switcher" class="game-state-switcher turn-switcher">
+              <button type="button" data-active-faction="Astra Militarum" aria-pressed="false">Astra turn</button><button type="button" data-active-faction="Chaos Space Marines" aria-pressed="false">Chaos turn</button>
+            </div></fieldset>
+          </div>
         </div>
         <details id="game-setup" class="game-setup">
           <summary><span>Detachments</span><strong id="game-setup-summary"></strong></summary>
