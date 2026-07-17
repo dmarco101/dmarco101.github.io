@@ -35,6 +35,7 @@ import { buildSourceVerificationKey } from "./views/source-verification.js";
 import { createAppUpdateController } from "./controllers/app-updates.js";
 import { createActiveGameController } from "./controllers/active-game.js";
 import { createReferenceDialogController } from "./controllers/reference-dialog.js";
+import { createReferenceNavigationController } from "./controllers/reference-navigation.js";
 import { createSearchController } from "./controllers/search-state.js";
 import { createUnitDirectoryController } from "./controllers/unit-directory.js";
 
@@ -48,15 +49,17 @@ const resultCount = document.querySelector("#result-count");
 const resultsTitle = document.querySelector("#results-title");
 const dialog = document.querySelector("#rule-dialog");
 const dialogContent = document.querySelector("#dialog-content");
+const referenceNavigationController = createReferenceNavigationController({
+  history,
+  location,
+  onNavigate: () => { void applyRoute(); }
+});
 const referenceDialogController = createReferenceDialogController({
   dialog,
   closeButton: document.querySelector("#close-dialog"),
   body: document.body,
   onRequestClose: closeDetail,
-  onClosed: () => {
-    const route = parseAppRoute(location.hash);
-    if (route.detailType) location.hash = `#${route.view}`;
-  }
+  onClosed: closeDetail
 });
 const searchController = createSearchController({
   headerInput: searchInput,
@@ -457,13 +460,11 @@ async function applyRoute() {
 }
 
 function navigateDetail(view, type, id) {
-  location.hash = buildDetailHash(view, type, id);
+  referenceNavigationController.open(buildDetailHash(view, type, id));
 }
 
 function closeDetail() {
-  const route = parseAppRoute(location.hash);
-  if (route.detailType) location.hash = `#${route.view}`;
-  else referenceDialogController.close();
+  if (!referenceNavigationController.close()) referenceDialogController.close();
 }
 
 function bindCalculator(formId, handler) {
@@ -537,7 +538,7 @@ document.addEventListener("click", (event) => {
     document.querySelector("#route-status").textContent = `${roundReminder.textContent.startsWith("Used") ? "Reminder available again" : "Reminder marked used"} for Battle Round ${activeGame.battleRound}.`;
   }
   const deepLink = event.target.closest("[data-deep-link]");
-  if (deepLink) location.hash = deepLink.dataset.deepLink;
+  if (deepLink) referenceNavigationController.open(deepLink.dataset.deepLink);
   const viewAll = event.target.closest("[data-view-all]");
   if (viewAll) {
     searchController.clear({ notify: false, focus: false });
@@ -569,7 +570,7 @@ const voiceSearch = createVoiceSearch({
     if (match) {
       voiceStatus.textContent = `Opening ${match.title}.`;
       if (location.hash === match.hash) void applyRoute();
-      else location.hash = match.hash;
+      else referenceNavigationController.open(match.hash);
       return;
     }
     voiceStatus.textContent = `Searching for ${transcript}.`;

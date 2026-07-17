@@ -4,6 +4,7 @@ export function createReferenceDialogController({ dialog, closeButton, body, onR
 
   function show() {
     if (!dialog.open) dialog.showModal();
+    dialog.scrollTop = 0;
     lockPage();
   }
 
