@@ -1,5 +1,6 @@
 import { matchesSearchQuery } from "./search-query.js";
 import { isSourceVerificationState } from "./source-verification.js";
+import { getBattleRoundEligibility } from "./active-game.js";
 
 const normalise = (value) => String(value ?? "").trim().toLowerCase().replace(/[^a-z0-9+]+/g, " ").trim();
 const weaponMapCache = new WeakMap();
@@ -23,7 +24,7 @@ export function normaliseStratagemTiming(timing) {
   return { phases: phaseMatches, turn };
 }
 
-export function buildActiveGameReference({ detachments, coreStratagems, astraDetachmentId, chaosDetachmentId, phase, activeFaction }) {
+export function buildActiveGameReference({ detachments, coreStratagems, astraDetachmentId, chaosDetachmentId, battleRound = 1, phase, activeFaction }) {
   const selected = [
     detachments.find((entry) => entry.id === astraDetachmentId),
     detachments.find((entry) => entry.id === chaosDetachmentId)
@@ -32,17 +33,23 @@ export function buildActiveGameReference({ detachments, coreStratagems, astraDet
     const timingMeta = normaliseStratagemTiming(item.timing);
     const relation = detachment.faction === activeFaction ? "your" : "opponent";
     const turnMatches = timingMeta.turn === "either" || timingMeta.turn === relation;
-    return { ...item, id: `${detachment.id}:${item.id}`, source: detachment.name, faction: detachment.faction, timingMeta, timingMatch: timingMeta.phases.includes(phase) && turnMatches };
+    const roundEligibility = getBattleRoundEligibility(item, battleRound);
+    return { ...item, id: `${detachment.id}:${item.id}`, source: detachment.name, faction: detachment.faction, timingMeta, roundEligibility, timingMatch: timingMeta.phases.includes(phase) && turnMatches };
   }));
   const coreEntries = coreStratagems.map((item) => ({
     ...item,
     source: "Core Stratagem",
     faction: item.turn === "either" ? "Either player" : item.turn === "your" ? activeFaction : selected.find((entry) => entry.faction !== activeFaction)?.faction ?? "Opponent",
     timingMeta: { phases: item.phases, turn: item.turn },
+    roundEligibility: getBattleRoundEligibility(item, battleRound),
     timingMatch: item.phases.includes(phase)
   }));
   const all = [...coreEntries, ...factionEntries];
-  return { now: all.filter((item) => item.timingMatch), later: all.filter((item) => !item.timingMatch) };
+  return {
+    now: all.filter((item) => item.timingMatch && item.roundEligibility.eligible),
+    roundLocked: all.filter((item) => item.timingMatch && !item.roundEligibility.eligible),
+    later: all.filter((item) => !item.timingMatch)
+  };
 }
 
 export function searchRuleEntries(entries, query, activeFilter = "all") {

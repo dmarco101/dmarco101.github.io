@@ -185,9 +185,19 @@ dialog li { margin: 7px 0; line-height: 1.45; }
 .game-timing-sentinel { height: 1px; margin-bottom: -1px; }
 .game-timing-toolbar { margin-top: 20px; }
 .game-timing-controls { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(260px, .8fr); gap: 14px; }
+.game-timing-summary { display: none; }
 .game-timing-toggle { display: none; }
 .game-timing-toolbar fieldset { min-width: 0; margin: 0; border: 0; padding: 0; }
 .game-timing-toolbar legend { margin-bottom: 7px; color: #dfe8e3; font-size: .74rem; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }
+.game-round-controls { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(180px, .55fr) minmax(240px, 1fr); gap: 10px; }
+.battle-round-switcher { display: grid; grid-template-columns: 44px minmax(64px, 1fr) 44px; gap: 6px; }
+.battle-round-switcher button, .battle-round-switcher output { display: grid; place-items: center; min-height: 44px; border: 1px solid #52626a; border-radius: 9px; background: #0d141a; color: var(--text); }
+.battle-round-switcher output { color: #ffe0a0; font-weight: 900; }
+.battle-round-switcher button:disabled { opacity: .4; cursor: not-allowed; }
+.game-next-step { align-items: center; justify-content: space-between; gap: 12px; border-color: #8a6b2a; background: #322813; color: #ffe4a8; font-weight: 800; }
+.game-next-step small { color: #d9c38f; font-size: .7rem; font-weight: 700; }
+.game-next-step--full { display: flex; min-height: 44px; }
+.game-next-step--compact { display: none; }
 .game-state-switcher { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
 .game-state-switcher button { min-height: 44px; border-color: #52626a; background: #0d141a; color: var(--muted); padding: 8px; font-size: .76rem; }
 .game-state-switcher button[aria-pressed="true"] { border-color: var(--accent); background: #2a2112; color: #ffe0a0; box-shadow: inset 0 0 0 1px #e5b44c33; }
@@ -195,10 +205,20 @@ dialog li { margin: 7px 0; line-height: 1.45; }
 .game-setup { margin-top: 12px; border: 1px solid var(--line); border-radius: 10px; background: #10181e; }
 .game-setup > summary { display: flex; justify-content: space-between; gap: 16px; padding: 11px 13px; color: #dfe8e3; cursor: pointer; font-size: .8rem; font-weight: 800; }
 .game-setup > summary strong { overflow: hidden; color: var(--muted); font-size: .72rem; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
-.active-game-controls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)) auto; gap: 12px; border-top: 1px solid var(--line); padding: 12px; }
+.active-game-controls { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) auto; gap: 12px; border-top: 1px solid var(--line); padding: 12px; }
 .active-game-controls label { display: grid; gap: 6px; color: #dfe8e3; font-size: .78rem; font-weight: 700; }
 .active-game-controls select { min-width: 0; border: 1px solid #52626a; border-radius: 8px; background: #0d141a; color: var(--text); padding: 9px; }
 .active-game-controls button { align-self: end; }
+.round-reminders { margin-top: 16px; border: 1px solid #586441; border-radius: 12px; background: #151d17; padding: 14px; }
+.round-reminders .section-heading { align-items: end; margin-bottom: 10px; }
+.round-reminders .section-heading h2 { font-size: 1.05rem; }
+.round-reminder-list { display: grid; gap: 8px; }
+.round-reminder { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; border: 1px solid #3d4c3e; border-radius: 10px; background: #101811; padding: 11px 12px; }
+.round-reminder > div { display: grid; gap: 2px; }
+.round-reminder small, .round-reminder span { color: var(--muted); font-size: .7rem; }
+.round-reminder button { min-width: 96px; border-color: #6d7b50; background: #1c281a; color: #cde5bd; }
+.round-reminder.is-used { opacity: .72; }
+.round-reminder.is-used button { border-color: #52626a; background: #172129; color: #cbd5d1; }
 .game-reference { margin-top: 16px; border: 1px solid var(--line); border-radius: 12px; background: #10181e; padding: 14px; }
 .game-reference .section-heading h2, .active-game-group .section-heading h2 { font-size: 1.1rem; }
 .game-reference .section-heading { align-items: end; margin-bottom: 0; }
@@ -227,11 +247,14 @@ dialog li { margin: 7px 0; line-height: 1.45; }
 .timing-warning { margin: 16px 0; border-left: 3px solid var(--accent); background: #211e17; padding: 10px 12px; color: #cbd5d1; font-size: .84rem; }
 .timing-warning strong { color: #ffe0a0; }
 .active-game-group { margin-top: 18px; }
+.round-locked-group { border-left: 3px solid #866c37; padding-left: 12px; }
+.round-lock-notice { color: #e8ca83; }
 .active-stratagem-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
 .active-stratagem { border: 1px solid var(--line); border-radius: 10px; background: #111a20; overflow: hidden; }
 .active-stratagem summary { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 11px 12px; cursor: pointer; }
 .active-stratagem summary span { display: grid; gap: 3px; }
 .active-stratagem summary small { color: #cbd5d1; font-size: .67rem; text-transform: uppercase; }
+.active-stratagem summary .round-lock-summary { color: #e8ca83; font-size: .72rem; text-transform: none; }
 .active-stratagem summary > b { color: var(--accent); font-size: .8rem; }
 .active-stratagem > div { border-top: 1px solid var(--line); padding: 2px 12px 12px; }
 .active-stratagem p { margin: 9px 0; font-size: .84rem; }
@@ -351,20 +374,27 @@ dialog li { margin: 7px 0; line-height: 1.45; }
   .active-game-section { --active-game-sticky-top: 198px; }
   .game-timing-toolbar { position: sticky; top: 138px; z-index: 10; margin: 16px -8px 0; border: 1px solid #43545e; border-radius: 12px; background: #10171df2; padding: 8px; backdrop-filter: blur(12px); }
   .game-timing-toolbar.is-stuck { box-shadow: 0 10px 24px #0008; }
+  .game-timing-toolbar.is-stuck .game-timing-summary { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; }
   .game-timing-toolbar.is-stuck .game-timing-toggle { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; min-height: 44px; border-color: #52626a; background: #111a20; padding: 7px 10px; text-align: left; }
   .game-timing-toggle > span:first-child { display: grid; gap: 2px; min-width: 0; }
   .game-timing-toggle small { color: var(--muted); font-size: .62rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
   .game-timing-toggle strong { overflow: hidden; color: var(--text); font-size: .78rem; text-overflow: ellipsis; white-space: nowrap; }
   .game-timing-action { flex: 0 0 auto; color: var(--accent); font-size: .72rem; font-weight: 800; }
+  .game-timing-toolbar.is-stuck.is-compact .game-timing-summary { grid-template-columns: minmax(0, 1fr) auto; }
+  .game-timing-toolbar.is-stuck.is-compact .game-next-step--compact { display: flex; min-width: 68px; min-height: 44px; padding: 7px 10px; }
   .game-timing-toolbar.is-stuck:not(.is-compact) .game-timing-controls { margin-top: 8px; }
   .game-timing-toolbar.is-compact { padding: 6px; }
   .game-timing-controls[hidden] { display: none; }
+  .game-round-controls { grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); }
   .game-state-switcher { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; overflow: visible; padding-bottom: 0; }
   .game-state-switcher button { min-width: 0; padding: 6px 2px; font-size: clamp(.62rem, 2.4vw, .72rem); }
   .turn-switcher { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
   .turn-switcher button { padding-inline: 8px; font-size: .72rem; }
   .game-setup > summary strong { max-width: 60%; }
   .active-game-controls, .active-stratagem-grid { grid-template-columns: 1fr; }
+  .round-reminder { grid-template-columns: 1fr; }
+  .round-reminders .section-heading { align-items: flex-start; }
+  .round-reminder button { width: 100%; min-height: 44px; }
   .game-reference .section-heading { align-items: stretch; gap: 10px; }
   .game-reference .section-heading > div > p:last-child { display: none; }
   .game-reference-actions { display: grid; grid-template-columns: auto repeat(2, minmax(0, 1fr)); justify-content: stretch; width: 100%; gap: 6px; }

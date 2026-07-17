@@ -797,6 +797,7 @@ export const ruleDetailsByDetachment = {
         "eligibility": "See source eligibility.",
         "effect": "CHAOS LORD model only (excluding JUMP PACK models). Once per battle round , when a saving throw is failed for the bearer’s unit, you can change the Damage characteristic of that attack to 0.",
         "restrictions": "Apply only to the eligible bearer or unit described above.",
+        "usageLimit": "once-per-battle-round",
         "sourceUrl": "https://wahapedia.ru/wh40k10ed/factions/chaos-space-marines/#Fellhammer-Siege-host"
       },
       "Iron Artifice": {
@@ -924,6 +925,7 @@ export const ruleDetailsByDetachment = {
         "target": "One HERETIC ASTARTES JUMP PACK unit from your army that is in Reserves .",
         "effect": "Set your unit up anywhere on the battlefield that is more than 6\" horizontally away from all enemy units, but until the end of the turn, it is not eligible to declare a charge . Then select one enemy INFANTRY or MOUNTED unit within 9\" of and visible to your unit: that unit must take a Battle-shock test .",
         "restrictions": "No additional restriction stated.",
+        "minBattleRound": 2,
         "sourceUrl": "https://wahapedia.ru/wh40k10ed/factions/chaos-space-marines/#Dread-Talons"
       },
       "Merciless Pursuit": {

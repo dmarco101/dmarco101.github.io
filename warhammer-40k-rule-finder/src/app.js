@@ -21,6 +21,7 @@ import {
   buildDetailHash
 } from "./lib/rule-finder.js";
 import { addGameReference, migrateGameReferences, moveGameReference, removeGameReference } from "./lib/game-reference.js";
+import { buildRoundReminders } from "./lib/active-game.js";
 import { addRecent, loadActiveGame, loadGameReferences, loadRecent, storageKeys, writeJson } from "./lib/storage.js";
 import { findConfidentSearchMatch, searchCatalog } from "./lib/catalog-search.js";
 import { escapeHtml } from "./lib/html.js";
@@ -89,14 +90,19 @@ const activeGameController = createActiveGameController({
   timingToggle: document.querySelector("#game-timing-toggle"),
   timingCurrent: document.querySelector("#game-timing-current"),
   timingAction: document.querySelector("#game-timing-action"),
+  roundSwitcher: document.querySelector("#battle-round-switcher"),
+  roundCurrent: document.querySelector("#battle-round-current"),
   phaseSwitcher: document.querySelector("#phase-switcher"),
   turnSwitcher: document.querySelector("#turn-switcher"),
+  nextStepButtons: document.querySelectorAll("[data-next-game-step]"),
+  nextStepLabels: document.querySelectorAll("[data-next-game-label]"),
   summary: document.querySelector("#game-setup-summary"),
   resetButton: document.querySelector("#reset-active-game"),
   scrollTarget: window,
   mobileQuery: window.matchMedia("(max-width: 560px)"),
   requestFrame: window.requestAnimationFrame.bind(window),
-  onChange: () => { saveActiveGame(); void renderActiveGame(); }
+  onChange: () => { saveActiveGame(); void renderActiveGame(); },
+  onAnnounce: (message) => { document.querySelector("#route-status").textContent = message; }
 });
 let gameReferences = loadGameReferences(localStorage);
 let recentReferences = migrateRecentRoutes(loadRecent(localStorage));
@@ -273,7 +279,18 @@ function renderActiveStratagem(item) {
   const [parentId, referenceId] = item.id.split(":");
   const save = item.source === "Core Stratagem" ? gameReferenceButton("rule", item.id) : gameReferenceButton("stratagem", referenceId, parentId);
   const detail = item.target ? `<p><b>Target</b>${escapeHtml(item.target)}</p><p><b>Effect</b>${escapeHtml(item.effect)}</p><p><b>Restrictions</b>${escapeHtml(item.restrictions)}</p>${factionLink}` : `<button type="button" data-open-rule="${escapeHtml(item.id)}">Open Core rule guide</button>`;
-  return `<details class="active-stratagem"><summary><span><small>${escapeHtml(item.source)} · ${escapeHtml(item.faction)}</small><strong>${escapeHtml(item.name)}</strong></span><b>${item.cp}CP</b></summary><div>${save}<p><b>When</b>${escapeHtml(item.timing)}</p>${detail}</div></details>`;
+  const roundNotice = item.roundEligibility?.eligible === false ? `<p class="round-lock-notice"><b>Battle round</b>${escapeHtml(item.roundEligibility.reason)}</p>` : "";
+  const roundSummary = item.roundEligibility?.eligible === false ? `<small class="round-lock-summary">${escapeHtml(item.roundEligibility.reason)}</small>` : "";
+  return `<details class="active-stratagem"><summary><span><small>${escapeHtml(item.source)} · ${escapeHtml(item.faction)}</small><strong>${escapeHtml(item.name)}</strong>${roundSummary}</span><b>${item.cp}CP</b></summary><div>${save}${roundNotice}<p><b>When</b>${escapeHtml(item.timing)}</p>${detail}</div></details>`;
+}
+
+function renderRoundReminders() {
+  const reminders = buildRoundReminders({ references: gameReferences, detachments: detachmentEntries, usedIds: activeGame.usedRoundReminders });
+  const section = document.querySelector("#round-reminders");
+  section.hidden = reminders.length === 0;
+  document.querySelector("#round-reminder-round").textContent = String(activeGame.battleRound);
+  document.querySelector("#round-reminder-count").textContent = `${reminders.filter((item) => item.used).length}/${reminders.length} used`;
+  document.querySelector("#round-reminder-results").innerHTML = reminders.map((item) => `<article class="round-reminder${item.used ? " is-used" : ""}"><div><small>${escapeHtml(item.detachment)}</small><strong>${escapeHtml(item.name)}</strong><span>${escapeHtml(item.label)}</span></div><button type="button" data-round-reminder-id="${escapeHtml(item.id)}" aria-pressed="${item.used}">${item.used ? "Used · Undo" : "Mark used"}</button></article>`).join("");
 }
 
 async function renderGameReference() {
@@ -284,6 +301,7 @@ async function renderGameReference() {
   document.querySelector("#game-reference-count").textContent = `${view.count} saved`;
   document.querySelector("#clear-game-reference").disabled = view.count === 0;
   document.querySelector("#game-reference-results").innerHTML = view.html;
+  renderRoundReminders();
 }
 
 async function renderActiveGame() {
@@ -293,8 +311,11 @@ async function renderActiveGame() {
   activeGameController.sync();
   const reference = buildActiveGameReference({ detachments: detachmentEntries, coreStratagems: coreStratagemTimings, ...activeGame });
   document.querySelector("#active-now-count").textContent = `${reference.now.length} matches`;
+  document.querySelector("#round-locked-count").textContent = `${reference.roundLocked.length} locked`;
   document.querySelector("#active-later-count").textContent = `${reference.later.length} later`;
   document.querySelector("#active-now").innerHTML = reference.now.length ? reference.now.map(renderActiveStratagem).join("") : `<div class="empty-state"><h3>No timing matches</h3><p>There are no Core or selected-detachment Stratagems matching this phase and active player.</p></div>`;
+  document.querySelector("#round-locked-group").hidden = reference.roundLocked.length === 0;
+  document.querySelector("#round-locked").innerHTML = reference.roundLocked.map(renderActiveStratagem).join("");
   document.querySelector("#active-later").innerHTML = reference.later.map(renderActiveStratagem).join("");
   await renderGameReference();
 }
@@ -503,6 +524,17 @@ document.addEventListener("click", (event) => {
   if (moveReference) {
     gameReferences = moveGameReference(gameReferences, moveReference.dataset.referenceType, moveReference.dataset.referenceId, moveReference.dataset.moveReference, moveReference.dataset.parentId || null);
     saveGameReferences(); void renderGameReference();
+  }
+  const roundReminder = event.target.closest("[data-round-reminder-id]");
+  if (roundReminder) {
+    const id = roundReminder.dataset.roundReminderId;
+    const used = new Set(activeGame.usedRoundReminders);
+    if (used.has(id)) used.delete(id);
+    else used.add(id);
+    activeGameController.replace({ usedRoundReminders: [...used] });
+    saveActiveGame();
+    renderRoundReminders();
+    document.querySelector("#route-status").textContent = `${roundReminder.textContent.startsWith("Used") ? "Reminder available again" : "Reminder marked used"} for Battle Round ${activeGame.battleRound}.`;
   }
   const deepLink = event.target.closest("[data-deep-link]");
   if (deepLink) location.hash = deepLink.dataset.deepLink;

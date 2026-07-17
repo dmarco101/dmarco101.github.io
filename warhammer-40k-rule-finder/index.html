@@ -83,11 +83,20 @@
         </div>
         <div id="game-timing-sentinel" class="game-timing-sentinel" aria-hidden="true"></div>
         <div id="game-timing-toolbar" class="game-timing-toolbar">
-          <button id="game-timing-toggle" class="game-timing-toggle" type="button" aria-expanded="true" aria-controls="game-timing-controls">
-            <span><small>Current timing</small><strong id="game-timing-current"></strong></span>
-            <span id="game-timing-action" class="game-timing-action">Done</span>
-          </button>
+          <div class="game-timing-summary">
+            <button id="game-timing-toggle" class="game-timing-toggle" type="button" aria-expanded="true" aria-controls="game-timing-controls">
+              <span><small>Current timing</small><strong id="game-timing-current"></strong></span>
+              <span id="game-timing-action" class="game-timing-action">Done</span>
+            </button>
+            <button class="game-next-step game-next-step--compact" type="button" data-next-game-step><span>Next</span><span class="sr-only" data-next-game-label></span></button>
+          </div>
           <div id="game-timing-controls" class="game-timing-controls">
+            <div class="game-round-controls">
+              <fieldset><legend>Battle round</legend><div id="battle-round-switcher" class="battle-round-switcher">
+                <button type="button" data-battle-round-change="-1" aria-label="Previous battle round">−</button><output id="battle-round-current" aria-label="Current battle round">1</output><button type="button" data-battle-round-change="1" aria-label="Next battle round">+</button>
+              </div></fieldset>
+              <button class="game-next-step game-next-step--full" type="button" data-next-game-step><span>Next phase</span><small data-next-game-label></small></button>
+            </div>
             <fieldset><legend>Phase</legend><div id="phase-switcher" class="game-state-switcher">
               <button type="button" data-game-phase="Command" aria-pressed="false">Command</button><button type="button" data-game-phase="Movement" aria-pressed="false">Movement</button><button type="button" data-game-phase="Shooting" aria-pressed="false">Shooting</button><button type="button" data-game-phase="Charge" aria-pressed="false">Charge</button><button type="button" data-game-phase="Fight" aria-pressed="false">Fight</button>
             </div></fieldset>
@@ -101,9 +110,14 @@
           <form id="active-game-controls" class="active-game-controls">
             <label>Astra detachment<select name="astraDetachmentId"></select></label>
             <label>Chaos detachment<select name="chaosDetachmentId"></select></label>
+            <label>First turn each round<select name="firstFaction"><option value="Astra Militarum">Astra Militarum</option><option value="Chaos Space Marines">Chaos Space Marines</option></select></label>
             <button id="reset-active-game" class="ghost" type="button">Reset game setup</button>
           </form>
         </details>
+        <section id="round-reminders" class="round-reminders" aria-labelledby="round-reminders-title" hidden>
+          <div class="section-heading inline-heading"><div><p class="eyebrow">Battle Round <span id="round-reminder-round">1</span></p><h2 id="round-reminders-title">This round</h2></div><span id="round-reminder-count" class="result-count"></span></div>
+          <div id="round-reminder-results" class="round-reminder-list"></div>
+        </section>
         <section class="game-reference" data-empty="true" aria-labelledby="game-reference-title">
           <div class="section-heading inline-heading">
             <div><p class="eyebrow">Pinned for this game</p><h2 id="game-reference-title">Game Reference List</h2><p>Keep the units and rules you expect to check within immediate reach.</p></div>
@@ -113,6 +127,7 @@
         </section>
         <div class="timing-warning"><strong>Timing match only.</strong> Check the target, trigger, CP, and restrictions before using a Stratagem.</div>
         <div class="active-game-group"><div class="section-heading inline-heading"><h2>Relevant now</h2><span id="active-now-count" class="result-count"></span></div><div id="active-now" class="active-stratagem-grid"></div></div>
+        <div id="round-locked-group" class="active-game-group round-locked-group" hidden><div class="section-heading inline-heading"><h2>Unavailable this round</h2><span id="round-locked-count" class="result-count"></span></div><div id="round-locked" class="active-stratagem-grid"></div></div>
         <details class="later-group"><summary>Show Stratagems for other phases <span id="active-later-count"></span></summary><div id="active-later" class="active-stratagem-grid"></div></details>
       </section>
 

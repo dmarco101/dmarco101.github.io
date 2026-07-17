@@ -1,4 +1,5 @@
 import { escapeHtml } from "../lib/html.js";
+import { activeGameTimingLabel, advanceActiveGame, describeNextActiveGameStep, setActiveGameRound } from "../lib/active-game.js";
 
 export function createActiveGameController({
   state,
@@ -12,14 +13,19 @@ export function createActiveGameController({
   timingToggle,
   timingCurrent,
   timingAction,
+  roundSwitcher,
+  roundCurrent,
   phaseSwitcher,
   turnSwitcher,
+  nextStepButtons,
+  nextStepLabels,
   summary,
   resetButton,
   scrollTarget,
   mobileQuery,
   requestFrame,
-  onChange
+  onChange,
+  onAnnounce = () => {}
 }) {
   let initialised = false;
   let compact = false;
@@ -27,8 +33,13 @@ export function createActiveGameController({
   let framePending = false;
 
   function currentTimingLabel() {
-    const turn = state.activeFaction === "Astra Militarum" ? "Astra turn" : "Chaos turn";
-    return `${state.phase} · ${turn}`;
+    return activeGameTimingLabel(state);
+  }
+
+  function syncNextStep() {
+    const nextLabel = describeNextActiveGameStep(state);
+    nextStepLabels.forEach((label) => { label.textContent = nextLabel; });
+    nextStepButtons.forEach((button) => button.setAttribute("aria-label", `Advance game to ${nextLabel}`));
   }
 
   function applyToolbarState(headerBottom = appHeader.getBoundingClientRect().bottom) {
@@ -36,6 +47,7 @@ export function createActiveGameController({
     toolbar.classList.toggle("is-compact", compact);
     timingControls.hidden = compact;
     timingCurrent.textContent = currentTimingLabel();
+    syncNextStep();
     timingAction.textContent = compact ? "Change" : "Done";
     timingToggle.setAttribute("aria-expanded", String(!compact));
     timingToggle.setAttribute("aria-label", `${currentTimingLabel()}. ${compact ? "Change timing" : "Hide timing controls"}`);
@@ -74,6 +86,11 @@ export function createActiveGameController({
     if (!initialised) return;
     form.elements.astraDetachmentId.value = state.astraDetachmentId;
     form.elements.chaosDetachmentId.value = state.chaosDetachmentId;
+    form.elements.firstFaction.value = state.firstFaction;
+    roundCurrent.textContent = String(state.battleRound);
+    roundSwitcher.querySelectorAll("[data-battle-round-change]").forEach((button) => {
+      button.disabled = button.dataset.battleRoundChange === "-1" && state.battleRound === 1;
+    });
     phaseSwitcher.querySelectorAll("[data-game-phase]").forEach((button) => {
       const active = button.dataset.gamePhase === state.phase;
       button.classList.toggle("active", active);
@@ -88,6 +105,7 @@ export function createActiveGameController({
     const chaosName = form.elements.chaosDetachmentId.selectedOptions[0]?.textContent ?? "Chaos";
     summary.textContent = `${astraName} · ${chaosName}`;
     timingCurrent.textContent = currentTimingLabel();
+    syncNextStep();
     updateStickyState();
   }
 
@@ -111,9 +129,23 @@ export function createActiveGameController({
     initialised = true;
 
     form.addEventListener("change", () => {
+      const previousFirstFaction = state.firstFaction;
       state.astraDetachmentId = form.elements.astraDetachmentId.value;
       state.chaosDetachmentId = form.elements.chaosDetachmentId.value;
+      state.firstFaction = form.elements.firstFaction.value;
+      if (state.firstFaction !== previousFirstFaction && state.battleRound === 1 && state.phase === "Command" && state.activeFaction === previousFirstFaction) {
+        state.activeFaction = state.firstFaction;
+      }
       commit();
+    });
+    roundSwitcher.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-battle-round-change]");
+      if (!button) return;
+      const next = setActiveGameRound(state, state.battleRound + Number(button.dataset.battleRoundChange));
+      if (next === state) return;
+      Object.assign(state, next);
+      commit();
+      onAnnounce(`${currentTimingLabel()}. Round reminders reset.`);
     });
     phaseSwitcher.addEventListener("click", (event) => {
       const button = event.target.closest("[data-game-phase]");
@@ -127,6 +159,11 @@ export function createActiveGameController({
       state.activeFaction = button.dataset.activeFaction;
       commit();
     });
+    nextStepButtons.forEach((button) => button.addEventListener("click", () => {
+      Object.assign(state, advanceActiveGame(state));
+      commit();
+      onAnnounce(`${currentTimingLabel()}.`);
+    }));
     timingToggle.addEventListener("click", () => {
       if (!stuck) return;
       compact = !compact;

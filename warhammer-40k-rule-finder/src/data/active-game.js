@@ -17,6 +17,9 @@ export const coreStratagemTimings = [
 export const defaultActiveGame = {
   astraDetachmentId: "combined-arms",
   chaosDetachmentId: "pactbound-zealots",
+  battleRound: 1,
+  firstFaction: "Astra Militarum",
   phase: "Command",
-  activeFaction: "Astra Militarum"
+  activeFaction: "Astra Militarum",
+  usedRoundReminders: []
 };
